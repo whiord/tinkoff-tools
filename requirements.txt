@@ -1,0 +1,2 @@
+pydantic~=4.3.0
+tinvest~=3.0.5
