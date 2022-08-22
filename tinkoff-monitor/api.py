@@ -11,6 +11,8 @@ log = logging.getLogger(__name__)
 class Api:
     def __init__(self, token):
         self.client = tinvest.AsyncClient(token)
+        # self.client._base_url = 'https://invest-public-api.tinkoff.ru/openapi'
+
         self.portfolio_api = tinvest.PortfolioApi(self.client)
         self.market_api = tinvest.MarketApi(self.client)
         self.figi_by_ticker = dict()
