@@ -8,9 +8,9 @@ from api import Api
 class PortfolioCalculator:
     def __init__(self, api: Api, args):
         self.api = api
-        self.portfolio_api = api.portfolio_api
-        self.args = args
+        self.client = api.client
 
+        self.args = args
         self.last_str = None
 
     async def update_tick(self):
@@ -26,29 +26,27 @@ class PortfolioCalculator:
         )
         summary += api.currency_balance[tinvest.Currency.rub]
 
-        async with api.portfolio_api.portfolio_get() as resp:
-            portfolio: tinvest.Portfolio = (
-                await resp.parse_json()
-            ).payload
+        resp = await self.client.get_portfolio()
+        portfolio = resp.payload
 
-            for pos in portfolio.positions:
-                obdata = await api.current_orders(pos.ticker)
+        for pos in portfolio.positions:
+            orders = await api.current_orders(pos.ticker)
 
+            summary += (
+                pos.balance * orders.last_price
+                * api.currency_price[pos.expected_yield.currency]
+            )
+
+            if pos.instrument_type == tinvest.InstrumentType.bond:
                 summary += (
-                        pos.balance * obdata.last_price
-                        * api.currency_price[pos.expected_yield.currency]
+                    pos.expected_yield.value
+                    * api.currency_price[pos.expected_yield.currency]
                 )
 
-                if pos.instrument_type == tinvest.InstrumentType.bond:
-                    summary += (
-                            pos.expected_yield.value
-                            * api.currency_price[pos.expected_yield.currency]
-                    )
-
-                last_candle = await api.last_day_candle(pos.ticker)
-                daily_change_by_currency[pos.expected_yield.currency] += (
-                        (obdata.last_price - last_candle.c) * pos.balance
-                )
+            last_candle = await api.last_day_candle(pos.ticker)
+            daily_change_by_currency[pos.expected_yield.currency] += (
+                (orders.last_price - last_candle.c) * pos.balance
+            )
 
         summary_str = str(round(round(summary), -3))
         L = len(summary_str)
