@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-import tinvest
-
 from api import Api
 
 
@@ -10,10 +8,18 @@ class PortfolioCalculator:
         self.api = api
         self.client = api.client
 
+        self.main_acc_id: str = ""
+
         self.args = args
         self.last_str = None
 
+    # async def init_main_acc(self):
+
+
     async def update_tick(self):
+        # if not self.main_acc_id:
+        #     await self.init_main_acc()
+
         api = self.api
 
         daily_change_by_currency = defaultdict(int)
